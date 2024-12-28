@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# This script processes a genomic FASTA file, modifying the sequence headers
+# to use a simplified and consistent naming convention for chromosomes and contigs.
+### Example with the Li genome
+
+# Input file containing the genomic sequences
+input_file="GCA_021437245.1_ASM2143724v1_genomic.fna"
+
+# Output file where the modified genome will be saved
+output_file="modified_genome.fna"
+
+# Initialize counters for chromosomes and contigs
+chr_count=1     # Counter for naming chromosomes (e.g., Chr01, Chr02)
+contig_count=1  # Counter for naming contigs (e.g., Contig1, Contig2)
+
+# Process each line in the input file
+while read -r line; do
+    if [[ $line == \>* ]]; then  # Check if the line is a header line (starts with '>')
+        if [[ $line == *"Chromosome"* ]]; then
+            # If the header contains "Chromosome", replace it with a standardized name
+            # Format: Chr01, Chr02, etc.
+            printf ">Chr%02d\n" $chr_count
+            ((chr_count++))  # Increment the chromosome counter
+        elif [[ $line == *"Contig"* ]]; then
+            # If the header contains "Contig", replace it with a standardized name
+            # Format: Contig1, Contig2, etc.
+            printf ">Contig%d\n" $contig_count
+            ((contig_count++))  # Increment the contig counter
+        fi
+    else
+        # If the line is part of the sequence data, leave it unchanged
+        echo "$line"
+    fi
+done < "$input_file" > "$output_file"
+
+# The output file now contains the modified headers with standardized names
