@@ -1,0 +1,69 @@
+#!/bin/bash
+#SBATCH --job-name=genome_chrom               # Job name for Slurm
+#SBATCH --output=./log_%j_%x_out.txt         # Log file for standard output (job ID and name included)
+#SBATCH --error=./log_%j_%x_err.txt          # Log file for standard error (job ID and name included)
+#SBATCH --nodes=1                            # Number of nodes to use
+#SBATCH --ntasks-per-node=1                  # Number of tasks per node
+#SBATCH --mem=6G                             # Memory allocation per job
+#SBATCH --time=1:00:00                       # Time limit for the job
+#SBATCH --partition=agap_long                # Specify the job queue/partition
+
+# -------------------------------------------------------------------------------
+# README - Extraction of mRNA Sequences and Adjacent Regions  
+# -------------------------------------------------------------------------------
+# Description:  
+# This script uses the AGAT tool to extract mRNA sequences and their adjacent 
+# upstream (5') and downstream (3') regions from a GFF file and a reference genome.  
+# The extracted sequences include 200 base pairs (bp) upstream and downstream 
+# of each mRNA, alongside the full mRNA sequence.  
+
+# -------------------------------------------------------------------------------
+# Step 1: Load required modules
+# -------------------------------------------------------------------------------
+module load bioinfo-cirad                     # Load the bioinformatics module
+module load AGAT/1.2.0-singularity            # Load the AGAT tool module (version 1.2.0)
+
+# -------------------------------------------------------------------------------
+# Step 2: Define file paths
+# -------------------------------------------------------------------------------
+
+# Path to the directory containing GFF files
+gff_path="/home/barrientosm/projects/GE2POP/2024_TRANS_CWR/2024_MANUEL_BARRIENTOS/01_raw_data/SPELTOIDES_GENOME_gff"
+
+# Specific GFF file to use (modified version)
+gff_file="$gff_path/modified_GFF_LI_2022.gff"
+
+# Path to the directory containing FASTA genome files
+Genome_path="/home/barrientosm/projects/GE2POP/REFERENCES/TRITICUM/SPELTOIDES_ORIGINAL/LI_2022_Accession_TS01"
+
+# Reference genome FASTA file (modified version)
+Genome="$Genome_path/GCA_021437245.1_ASM2143724v1_genomic_modified.fasta"
+
+# -------------------------------------------------------------------------------
+# Step 3: Extract mRNA sequences with AGAT
+# -------------------------------------------------------------------------------
+# The AGAT command extracts mRNA sequences and includes 200 bp upstream and downstream regions.
+# Flags:
+#   -g: Path to the GFF file.
+#   -f: Path to the genome FASTA file.
+#   -t: Type of feature to extract (mRNA in this case).
+#   --down: Number of base pairs to include downstream of each mRNA.
+#   --upstream: Number of base pairs to include upstream of each mRNA.
+#   --full: Ensure full-length regions are extracted for both upstream and downstream.
+#   -o: Output file to store the extracted sequences.
+
+agat_sp_extract_sequences.pl \
+    -g $gff_file \
+    -f $Genome \
+    -t mrna \
+    --down 200 \
+    --full \
+    --upstream 200 \
+    --full \
+    -o speltoides_transcriptome_LI_2022.fasta
+
+# -------------------------------------------------------------------------------
+# Output:
+# The extracted mRNA sequences, along with their 200 bp upstream and downstream 
+# regions, are saved in the file: "speltoides_transcriptome_LI_2022.fasta".
+# -------------------------------------------------------------------------------
