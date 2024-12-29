@@ -1,8 +1,8 @@
 ---
-title: "Order GFF File"
-author: "Manuel Barrientos"
+title: "order_gff"
+author: "Manuel_Barrientos"
 date: "20/12/2024"
-output:
+output: 
   html_document:
     keep_md: true
     code_folding: hide
@@ -16,148 +16,227 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-# Set global chunk options to control output display
+# Chargement des options pour cacher le code et ne montrer que les figures
 knitr::opts_chunk$set(
-  echo = FALSE,      # Hide code by default
-  message = FALSE,   # Suppress package loading messages
-  warning = FALSE,   # Suppress warnings
-  fig.align = 'center', # Center align figures
-  fig.width = 8,     # Figure width
-  fig.height = 6     # Figure height
+  echo = FALSE,      # Masquer le code
+  message = FALSE,   # Masquer les messages de chargement de packages
+  warning = FALSE,   # Masquer les avertissements
+  fig.align = 'center', # Centrer les figures
+  fig.width = 8,     # Largeur des figures
+  fig.height = 6     # Hauteur des figures
 )
 ```
 
-## Introduction
-This RMarkdown script processes a GFF file to create sorted and organized outputs based on genomic features.
-# The script reads a GFF file, converts it into `GRanges` objects, and organizes gene information by sequence and start position.
+## R Markdown
 
-## Step 1: Load the GFF File
-```{r load-gff}
-# Required packages
-# Uncomment to install if not already available
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+
 # install.packages("BiocManager")
 # BiocManager::install("GenomicRanges")
 # install.packages("rtracklayer")
 
-# Define file path to the GFF file
-gff_file_path <- "/home/barrientosm/projects/GE2POP/2024_TRANS_CWR/2024_MANUEL_BARRIENTOS/01_raw_data/SPELTOIDES_GENOME_gff/LI_2022_GWHBFXR00000000.1.gff"
+# Lire le fichier
+file_path <- "/home/barrientosm/projects/GE2POP/2024_TRANS_CWR/2024_MANUEL_BARRIENTOS/01_raw_data/SPELTOIDES_GENOME_gff/LI_2022_GWHBFXR00000000.1.gff"
 
-# Read GFF file without a header
-gff <- read.table(gff_file_path, header = FALSE, sep = "\t", stringsAsFactors = FALSE)
+# Charger les données sans en-tête
+gff <- read.table(file_path, header = FALSE, sep = "\t", stringsAsFactors = FALSE)
 
 print("GFF file loaded. First few rows:")
-print(head(gff))
+print(head(gff)) # Inspect the data structure
+
 ```
 
-## Step 2: Create GRanges Object
-```{r create-granges}
-# Load necessary library
+```{r GR}
+
+
+# Charger les packages nécessaires
 library(GenomicRanges)
 
-# Create a GRanges object from GFF data
+print("Step 2: Creating GRanges object...")
+# Créer un objet GRanges avec toutes les colonnes
 gr <- GRanges(
-  seqnames = gff$V1,        # Column 1: sequence names (chromosomes)
-  ranges = IRanges(start = gff$V4, end = gff$V5),  # Columns 4-5: start and end positions
-  strand = gff$V7,          # Column 7: strand (+/-)
-  type = gff$V3,            # Column 3: feature type (e.g., exon, gene)
-  score = gff$V6,           # Column 6: score (if available)
-  phase = gff$V8,           # Column 8: phase (if applicable)
-  attributes = gff$V9       # Column 9: additional attributes
+  seqnames = gff$V1,        # Colonne 1: noms des séquences (chromosomes)
+  source = gff$V2,
+  type = gff$V3,            # Colonne 3: type de l'élément (exon, gène, etc.)
+  ranges = IRanges(start = gff$V4, end = gff$V5),  # Colonne 4: start, Colonne 5: end
+  score = gff$V6,           # Colonne 6: score (si disponible)
+  strand = gff$V7,          # Colonne 7: strand (+ ou -)
+  phase = gff$V8,           # Colonne 8: phase (si applicable)
+  attributes = gff$V9       # Colonne 9: attributs (ID, Parent, etc.)
 )
 
 print("GRanges object created. Summary:")
-print(gr)
-```
+print(gr) # Print the structure of the GRanges object
 
-## Step 3: Extract Gene IDs
-```{r extract-ids}
-# Extract gene IDs from the attributes column
+
+# Extraire l'ID du gène à partir des attributs de la colonne 9
 gene_ids <- sapply(strsplit(gff$V9, ";"), function(x) {
   id_info <- grep("ID=", x, value = TRUE)
   if (length(id_info) > 0) {
     return(sub("\\..*", "", sub("ID=", "", id_info)))
   } else {
-    return(NA)  # Return NA if no ID is found
+    return(NA)  # Si l'ID n'est pas trouvé, retourner NA
   }
 })
 
+print("Gene IDs extracted. First few gene IDs:")
+print(head(gene_ids)) # Inspect the extracted gene IDs
+
 # Add gene IDs to GRanges metadata
+print("Adding gene IDs to GRanges...")
 mcols(gr)$gene_id <- gene_ids
 
-print("Gene IDs extracted. First few IDs:")
-print(head(gene_ids))
-```
 
-## Step 4: Split GRanges by Sequence
-```{r split-granges}
-# Split the GRanges object by sequence names
+
+# Diviser l'objet GRanges par seqnames (pour chaque séquence)
 gr_split <- split(gr, seqnames(gr))
-
-print("Splitting complete. Number of sequences:")
+gr_split <- split(gr, seqnames(gr))
+print("Splitting done. Number of sequences:")
 print(length(gr_split))
 ```
 
-## Step 5: Sort Genes by Start Position for Each Sequence
-```{r sort-sequences}
-# Initialize a list to store sorted data frames
-sorted_dfs <- list()
 
-for (seq_idx in seq_along(gr_split)) {
-  # Extract current sequence
-  gr_seq <- gr_split[[seq_idx]]
+```{r GR_sort}
+
+# 
+
+# #### debugging 
+# print("Step 5: Sorting the first sequence by gene start position...")
+# 
+# # Sélectionner la première séquence uniquement
+# gr_seq <- gr_split[[1]]
+# 
+# seq_name <- unique(seqnames(gr_seq))
+# 
+# # Obtenir les ID des gènes de la première séquence
+# gene_ids <- unique(mcols(gr_seq)$gene_id)
+# 
+# # Si la première séquence contient au moins un gène
+# if (length(gene_ids) >= 1) {
+#   # Trouver les positions de départ de chaque gène
+#   gene_starts <- sapply(gene_ids, function(gene_id) {
+#     gene_elements <- gr_seq[mcols(gr_seq)$gene_id == gene_id]
+#     return(start(gene_elements)[1])  # Prendre le premier élément pour chaque gène
+#   })
+#   
+#   # Trier les gènes par position de départ
+#   sorted_gene_ids <- names(sort(gene_starts))
+#   
+#   # Initialiser une liste pour stocker les data frames des gènes triés
+#   df_list <- list()
+#   
+#   # Pour chaque gène trié, convertir en data frame et ajouter à la liste
+#   for (gene_id in sorted_gene_ids) {
+#     gr_gene <- gr_seq[mcols(gr_seq)$gene_id == gene_id]  # Extraire le gène
+#     df_gene <- as.data.frame(gr_gene)  # Convertir en data frame
+#     df_list[[gene_id]] <- df_gene  # Ajouter à la liste
+#   }
+#   
+#   # Fusionner tous les data frames de la liste en un seul
+#   combined_df <- do.call(rbind, df_list)
+#   
+#   # Donner un nom dynamique à l'objet en fonction du nom de la séquence
+#   assign(paste0(seq_name, "_df_combined"), combined_df)
+#   
+#   # Afficher le head du data frame combiné
+#   print(paste("Head of the combined data frame for sequence", seq_name, ":"))
+#   print(head(combined_df))
+#   
+# } else {
+#   print("First sequence has fewer than 1 gene.")
+# }
+# 
+# print("Sorting and combining complete.")
+
+
+### all 
+print("Step 5: Sorting the sequences by gene start position...")
+
+# Boucle sur chaque séquence dans gr_split
+for (i in 1:length(gr_split)) {
+  # Sélectionner la séquence actuelle
+  gr_seq <- gr_split[[i]]
+  
+  # Obtenir le nom de la séquence
   seq_name <- unique(seqnames(gr_seq))
-
-  # Extract gene IDs
+  
+  # Obtenir les ID des gènes de la séquence
   gene_ids <- unique(mcols(gr_seq)$gene_id)
-
-  if (length(gene_ids) > 0) {
-    # Find start positions of each gene
+  
+  # Si la séquence contient au moins un gène
+  if (length(gene_ids) >= 1) {
+    # Trouver les positions de départ de chaque gène
     gene_starts <- sapply(gene_ids, function(gene_id) {
       gene_elements <- gr_seq[mcols(gr_seq)$gene_id == gene_id]
-      return(start(gene_elements)[1])
+      return(start(gene_elements)[1])  # Prendre le premier élément pour chaque gène
     })
-
-    # Sort genes by start position
+    
+    # Trier les gènes par position de départ
     sorted_gene_ids <- names(sort(gene_starts))
-
-    # Create a combined data frame for sorted genes
-    df_list <- lapply(sorted_gene_ids, function(gene_id) {
-      as.data.frame(gr_seq[mcols(gr_seq)$gene_id == gene_id])
-    })
-
+    
+    # Initialiser une liste pour stocker les data frames des gènes triés
+    df_list <- list()
+    
+    # Pour chaque gène trié, convertir en data frame et ajouter à la liste
+    for (gene_id in sorted_gene_ids) {
+      gr_gene <- gr_seq[mcols(gr_seq)$gene_id == gene_id]  # Extraire le gène
+      df_gene <- as.data.frame(gr_gene)  # Convertir en data frame
+      df_list[[gene_id]] <- df_gene  # Ajouter à la liste
+    }
+    
+    # Fusionner tous les data frames de la liste en un seul
     combined_df <- do.call(rbind, df_list)
-
-    # Save the data frame with a dynamic name
-    sorted_dfs[[seq_name]] <- combined_df
-
-    print(paste("Sorted genes for sequence:", seq_name))
-    print(head(combined_df))
+    
+    # Donner un nom dynamique à l'objet en fonction du nom de la séquence
+    assign(paste0(seq_name, "_df_combined"), combined_df)
+    
+    # Afficher le head du data frame combiné
+    print(paste("Data frame finished for sequence", seq_name, ":"))
+ 
   } else {
-    print(paste("No genes found in sequence:", seq_name))
+    print(paste("Sequence", seq_name, "has fewer than 1 gene."))
   }
 }
-```
 
-## Step 6: Save Sorted Outputs
-```{r save-sorted}
-# Define output directory
-output_dir <- "/home/barrientosm/projects/GE2POP/2024_TRANS_CWR/2024_MANUEL_BARRIENTOS/01_raw_data/SPELTOIDES_GENOME_gff/sorted_LI"
+print("Sorting and combining complete.")
 
-dir.create(output_dir, showWarnings = FALSE)
+# Initialiser une liste pour stocker tous les data frames combinés
+all_combined_dfs <- list()
 
-# Save each sorted data frame to a separate file
-for (seq_name in names(sorted_dfs)) {
-  output_file <- file.path(output_dir, paste0(seq_name, "_sorted.gff"))
-  write.table(
-    sorted_dfs[[seq_name]], 
-    file = output_file, 
-    sep = "\t", 
-    quote = FALSE, 
-    row.names = FALSE, 
-    col.names = FALSE
-  )
-  print(paste("Saved sorted GFF for sequence:", seq_name))
+# Récupérer tous les objets dont le nom se termine par "_df_combined"
+for (obj_name in ls(pattern = "_df_combined$")) {
+  # Ajouter chaque data frame à la liste
+  all_combined_dfs[[obj_name]] <- get(obj_name)
 }
 
-print("All sorted files saved successfully.")
+# Combiner tous les data frames en un seul
+final_combined_df <- do.call(rbind, all_combined_dfs)
+
+# Afficher le head du data frame final
+print("Head of the final combined data frame:")
+print(head(final_combined_df))
+
+# Réorganiser les colonnes du data frame final en respectant l'ordre original
+final_combined_df <- final_combined_df[, c("seqnames", "source", "type", "start", "end", "score", "strand", "phase", "attributes")]
+
+# Afficher le head du data frame final réorganisé
+print("Head of the final combined data frame with original column order:")
+print(head(final_combined_df))
+```
+
+
+
+```{r GR_sort_output}
+# Spécifier le chemin de sortie
+output_dir <- "/home/barrientosm/projects/GE2POP/2024_TRANS_CWR/2024_MANUEL_BARRIENTOS/01_raw_data/SPELTOIDES_GENOME_gff"
+output_file <- file.path(output_dir, "LI_2022_GWHBFXR00000000.1_sorted.gff")
+
+# Sauvegarder le data frame combiné au format GFF
+write.table(final_combined_df, file = output_file, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE)
+
+print(paste("Final combined data frame saved to:", output_file))
 ```
