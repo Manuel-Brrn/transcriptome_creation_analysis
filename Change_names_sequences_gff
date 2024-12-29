@@ -4,13 +4,13 @@
 # based on a mapping table. The mapping table is created beforehand.
 
 # Input GFF file to process
-gff_file="LI_2022_GWHBFXR00000000.1_sorted.gff"
+gff_file="LI_2022_GWHBFXR00000000.1.gff"
 
 # Mapping file containing the relationships between chromosome names and contig IDs
 mapping_file="mapping_table_modified.txt"
 
 # Output GFF file with updated sequence names
-output_file="LI_2022_GWHBFXR00000000.1_sorted_chr_names.gff"
+output_file="modified_GFF_LI_2022.gff"
 
 # Step 1: Create the mapping table
 # This step extracts the correspondence between original sequence IDs and their new names from the GFF file
