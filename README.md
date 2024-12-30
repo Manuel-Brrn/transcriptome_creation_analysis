@@ -15,9 +15,10 @@ The genomic annotations (GFF files) used in this project were derived from the f
 ## Methods
 
   ### Processing GFF Files
+      Rename the sequences names to have correspondance between sequences names of the gff and the genome.
     Extraction of Genomic Regions
         Using AGAT (Another Gff Analysis Toolkit), relevant genomic regions were extracted from the GFF files.
-    Ordering the GFF Annotations
+    Ordering the genes of the transcriptomes
         The GenomicRanges package was employed to organize the GFF annotations systematically and prepare the final reference transcriptome.
 
 ### Tools and Dependencies
