@@ -16,7 +16,7 @@ output_file="modified_GFF_LI_2022.gff"
 # This step extracts the correspondence between original sequence IDs and their new names from the GFF file
 # and saves it into a file called mapping_table.txt.
 awk '/^#OriSeqID/ {ori=substr($0, index($0, "=")+1); getline; print ori "\t" $1}' "$gff_file" | \
-awk '{print $1 "\t" substr($2, index($2, "=")+1)}' > mapping_table.txt
+awk '{print $1 "\t" substr($2, index($2, "=")+1)}' > mapping_table_modified.txt
 
 # Step 2: Modify the mapping table if needed
 # The user can edit mapping_table.txt manually to ensure it matches their desired chromosome names.
