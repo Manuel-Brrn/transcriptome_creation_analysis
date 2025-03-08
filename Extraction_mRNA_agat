@@ -57,7 +57,6 @@ agat_sp_extract_sequences.pl \
     -f $Genome \
     -t mrna \
     --down 200 \
-    --full \
     --upstream 200 \
     --full \
     -o speltoides_transcriptome_LI_2022.fasta
