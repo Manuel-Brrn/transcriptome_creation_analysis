@@ -44,25 +44,22 @@ Genome="$Genome_path/GCA_021437245.1_ASM2143724v1_genomic_modified.fasta"
 # -------------------------------------------------------------------------------
 # The AGAT command extracts mRNA sequences and includes 200 bp upstream and downstream regions.
 # Flags:
-#   -g: Path to the GFF file.
-#   -f: Path to the genome FASTA file.
-#   -t: Type of feature to extract (mRNA in this case).
+#   -gff: Path to the GFF file.
+#   -fasta: Path to the genome FASTA file.
+#   --mrna: Type of feature to extract (mRNA in this case).
 #   --down: Number of base pairs to include downstream of each mRNA.
 #   --upstream: Number of base pairs to include upstream of each mRNA.
-#   --full: Ensure full-length regions are extracted for both upstream and downstream.
 #   -o: Output file to store the extracted sequences.
 
 agat_sp_extract_sequences.pl \
-    -g $gff_file \
-    -f $Genome \
-    -t mrna \
+    -gff $gff_file \
+    -fasta $Genome \
+    -- mrna \
     --down 200 \
     --upstream 200 \
-    --full \
-    -o speltoides_transcriptome_LI_2022.fasta
+    -o speltoides_transcriptome.fasta
 
 # -------------------------------------------------------------------------------
 # Output:
 # The extracted mRNA sequences, along with their 200 bp upstream and downstream 
-# regions, are saved in the file: "speltoides_transcriptome_LI_2022.fasta".
 # -------------------------------------------------------------------------------
