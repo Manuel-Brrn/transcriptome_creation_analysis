@@ -1,0 +1,15 @@
+
+# Check read counts match between R1/R2 splits (critical for paired-end data)
+echo "R1_00 count: $(bzcat Tr251_GGCTAC_L003_R1_00.fastq.bz2 | wc -l)/4" 
+echo "R1_01 count: $(bzcat Tr251_GGCTAC_L003_R1_01.fastq.bz2 | wc -l)/4"
+echo "R2_00 count: $(bzcat Tr251_GGCTAC_L003_R2_00.fastq.bz2 | wc -l)/4"
+echo "R2_01 count: $(bzcat Tr251_GGCTAC_L003_R2_01.fastq.bz2 | wc -l)/4"
+
+    R1_00: 12,500,000 reads (50M lines / 4)
+
+    R1_01: 6,035,285 reads (24,141,140 lines / 4)
+
+    R2_00: 12,500,000 reads (matches R1_00)
+
+    R2_01: 6,035,285 reads (matches R1_01)
+	
